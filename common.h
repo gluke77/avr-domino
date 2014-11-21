@@ -1,7 +1,7 @@
 #if !defined __COMMON_H_INCLUDED_
 #define __COMMON_H_INCLUDED_
 
-#define FW_VERSION	("20100625")
+#define FW_VERSION	("20100627")
 
 #define TRUE 1
 #define FALSE 0
@@ -44,6 +44,15 @@ typedef enum
 	RESULT_UNKNOWN_PORT,
 	RESULT_IGNORE_CMD
 } result_e;
+
+#define USART0_MODBUS_ID_ADDR	(0)
+#define USART0_BAUD_LO_ADDR		(1)
+#define USART0_BAUD_HI_ADDR		(3)
+#define USART1_BAUD_LO_ADDR		(5)
+#define USART1_BAUD_HI_ADDR		(7)
+
+// next addr 9
+
 
 #include <avr/io.h>
 #include <avr/interrupt.h>

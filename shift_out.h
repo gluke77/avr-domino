@@ -1,7 +1,7 @@
 #if !defined _SHIFT_INCLUDED
 #define _SHIFT_INCLUDED
 
-#include "..\common\common.h"
+#include "common.h"
 
 #define SHIFT_OUT_PORT		PORTB
 #define SHIFT_OUT_DDR		DDRB

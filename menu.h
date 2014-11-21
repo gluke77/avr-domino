@@ -8,7 +8,8 @@ typedef void (* menu_item_t)(void);
 enum menu_mode_e
 {
 	MENU_MODE_START = 0,
-//	MENU_MODE_CONTROLS,
+	MENU_MODE_CONTROLS,
+	MENU_MODE_USART,
 	MENU_MODE_VERSION,
 	MENU_MODE_COUNT
 };
@@ -31,5 +32,7 @@ extern menu_item_t menu_items[MENU_MODE_COUNT][MENU_ITEM_COUNT];
 
 extern uint8_t	g_menu_mode;
 extern uint8_t	g_menu_item[MENU_MODE_COUNT];
+
+extern uint8_t	g_menu_changed;
 
 #endif /* _MENU_INCLUDED */

@@ -1,6 +1,6 @@
 #include <avr\io.h>
-#include "../common/common.h"
-#include "../common/beep.h"
+#include "common.h"
+#include "beep.h"
 #include "kbd.h"
 #include <stdio.h>
 

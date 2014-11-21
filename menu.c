@@ -6,6 +6,8 @@ menu_item_t menu_items[MENU_MODE_COUNT][MENU_ITEM_COUNT];
 uint8_t	g_menu_mode = 0;
 uint8_t	g_menu_item[MENU_MODE_COUNT];
 
+uint8_t	g_menu_changed = 0;
+
 void menu_init(void)
 {
 	int	mode, item;
@@ -24,6 +26,8 @@ void menu_mode_next(void)
 
 	if (MENU_MODE_COUNT == g_menu_mode)
 		g_menu_mode = 0;
+		
+	g_menu_changed = 1;
 }
 
 void menu_mode_prev(void)
@@ -32,6 +36,8 @@ void menu_mode_prev(void)
 		g_menu_mode = MENU_MODE_COUNT;
 		
 	g_menu_mode--;
+
+	g_menu_changed = 1;	
 }
 
 void menu_item_next(void)
@@ -43,6 +49,8 @@ void menu_item_next(void)
 		
 	if (0 == menu_items[g_menu_mode][g_menu_item[g_menu_mode]])
 		g_menu_item[g_menu_mode] = 0;
+
+	g_menu_changed = 1;		
 }
 
 void menu_item_prev(void)
@@ -56,6 +64,8 @@ void menu_item_prev(void)
 	} 
 	while (0 == menu_items[g_menu_mode][g_menu_item[g_menu_mode]] &&
 		0 != g_menu_item[g_menu_mode]);
+
+	g_menu_changed = 1;
 }
 
 uint8_t menu_getmode(void)

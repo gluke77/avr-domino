@@ -2,8 +2,12 @@
 #include "usart.h"
 #include "common.h"
 
+int	g_usart1_last_error;
+int	g_last_nak;
+
 int codenet_continious_printing(int head, int on, int pitch)
 {
+	result_e	res;
 	char	buf[CN_MAX_MSG_LENGTH];
 	int		idx = 0;
 	int		param; 
@@ -24,17 +28,25 @@ int codenet_continious_printing(int head, int on, int pitch)
 	buf[idx++] = CN_EOT;
 	buf[idx++] = 0;
 
-	if ((res = usart1_cmd(buf, buf, 50, 500)) != RESULT_OK)
+	if ((res = usart1_cmd(buf, buf, 50, CODENET_DELAY)) != RESULT_OK)
+	{
+		g_usart1_last_error = res;
 		return -1;
-		
-	if (buf[0] != CN_ACK);
+	}
+	
+	if (buf[0] != CN_ACK)
+	{
+		if (CN_NAK == buf[0])
+			g_last_nak = (buf[1] - '0') * 100 + (buf[2] - '0') * 10 + (buf[3] - '0');
+
 		return -2;
-		
-	retutn 1;
+	}	
+	return 1;
 }
 
 int	codenet_message_to_head_assignment(int head, int msg)
 {
+	result_e	res;
 	char	buf[CN_MAX_MSG_LENGTH];
 	int		idx = 0;
 	int		param;
@@ -57,20 +69,33 @@ int	codenet_message_to_head_assignment(int head, int msg)
 	buf[idx++] = CN_EOT;
 	buf[idx++] = 0;
 
-	if ((res = usart1_cmd(buf, buf, 50, 500)) != RESULT_OK)
+	if ((res = usart1_cmd(buf, buf, 50, CODENET_DELAY)) != RESULT_OK)
+	{
+		g_usart1_last_error = res;
 		return -1;
+	}
 	
 	if ('?' == msg)
 	{
 		if (buf[0] != CN_ESC)
+		{
+			if (CN_NAK == buf[0])
+				g_last_nak = (buf[1] - '0') * 100 + (buf[2] - '0') * 10 + (buf[3] - '0');
+
 			return -2;
+		}	
 		else
 			return (buf[3]-'0') * 100 + (buf[4] - '0') * 10 + (buf[5] - '0');
 	}
 	else
 	{
 		if (buf[0] != CN_ACK)
+		{
+			if (CN_NAK == buf[0])
+				g_last_nak = (buf[1] - '0') * 100 + (buf[2] - '0') * 10 + (buf[3] - '0');
+
 			return -2;
+		}
 		else
 			return 1;
 	}
@@ -78,60 +103,83 @@ int	codenet_message_to_head_assignment(int head, int msg)
 
 int codenet_head_enable(int head, int on)
 {
+	result_e	res;
 	char	buf[CN_MAX_MSG_LENGTH];
 	int		idx = 0;
 	
 	buf[idx++] = CN_ESC;
 	buf[idx++] = 'Q';
 	buf[idx++] = '0' + head;
-	if ('?' == msg)
+	if ('?' == on)
 		buf[idx++] = '?';
 	else
-		buf = (on)?'Y':'N';
+		buf[idx++] = (on)?'Y':'N';
 	buf[idx++] = CN_EOT;
 	buf[idx++] = 0;
 
-	if ((res = usart1_cmd(buf, buf, 50, 500)) != RESULT_OK)
+	if ((res = usart1_cmd(buf, buf, 50, CODENET_DELAY)) != RESULT_OK)
+	{
+		g_usart1_last_error = res;
 		return -1;
+	}
 	
-	if ('?' == msg)
+	if ('?' == on)
 	{
 		if (buf[0] != CN_ESC)
+		{
+			if (CN_NAK == buf[0])
+				g_last_nak = (buf[1] - '0') * 100 + (buf[2] - '0') * 10 + (buf[3] - '0');
+
 			return -2;
+		}	
 		else
 			return (buf[3] == 'Y')?1:0;
 	}
 	else
 	{
 		if (buf[0] != CN_ACK)
+		{
+			if (CN_NAK == buf[0])
+				g_last_nak = (buf[1] - '0') * 100 + (buf[2] - '0') * 10 + (buf[3] - '0');
+
 			return -2;
+		}	
 		else
 			return 1;
 	}
 }
 
-int codenet_product_counting(int req)
+long codenet_product_counting(int req)
 {
+	result_e	res;
 	char	buf[CN_MAX_MSG_LENGTH];
 	int		idx = 0;
 	
 	buf[idx++] = CN_ESC;
 	buf[idx++] = 'T';
 	buf[idx++] = '1';
-	if ('?' == msg)
+	if ('?' == req)
 		buf[idx++] = '?';
 	else
 		buf[idx++] = '0';
 	buf[idx++] = CN_EOT;
 	buf[idx++] = 0;
 
-	if ((res = usart1_cmd(buf, buf, 50, 500)) != RESULT_OK)
+	if ((res = usart1_cmd(buf, buf, 50, CODENET_DELAY)) != RESULT_OK)
+	{
+		g_usart1_last_error = res;
 		return -1;
+	}
 	
-	if ('?' == msg)
+	if ('?' == req)
 	{
 		if (buf[0] != CN_ESC)
+		{
+			if (CN_NAK == buf[0])
+				g_last_nak = (buf[1] - '0') * 100 + (buf[2] - '0') * 10 + (buf[3] - '0');
+
 			return -2;
+		}	
 		else
 			return (buf[3]-'0') * 100000 + 
 				(buf[4] - '0') * 10000 + 
@@ -143,7 +191,12 @@ int codenet_product_counting(int req)
 	else
 	{
 		if (buf[0] != CN_ACK)
+		{
+			if (CN_NAK == buf[0])
+				g_last_nak = (buf[1] - '0') * 100 + (buf[2] - '0') * 10 + (buf[3] - '0');
+
 			return -2;
+		}	
 		else
 			return 1;
 	}

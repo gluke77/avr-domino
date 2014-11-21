@@ -1,6 +1,5 @@
 #include <avr\io.h>
-#include "..\common\common.h"
-#include "..\common\meto.h"
+#include "common.h"
 #include "sensor.h"
 
 volatile uint8_t	sensors;
@@ -9,7 +8,7 @@ uint8_t				inverse_mask;
 void sensor_init(void)
 {
 	inverse_mask = 0x00; // igk: was 0x07 -- 2008-11-23
-	inverse_mask |= _BV(SENSOR_END_OF_FOIL);
+//	inverse_mask |= _BV(SENSOR_END_OF_FOIL);
 	sensors = 0x00;
 	SENSOR_PORT_DDR = 0;
 }

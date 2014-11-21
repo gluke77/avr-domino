@@ -1,5 +1,5 @@
 #include <avr\io.h>
-#include "..\common\common.h"
+#include "common.h"
 #include "shift_out.h"
 
 uint8_t	controls;

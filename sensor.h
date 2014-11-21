@@ -1,7 +1,7 @@
 #if !defined _SENSOR_INCLUDED
 	#define _SENSOR_INCLUDED
 	
-#include "..\common\common.h"
+#include "common.h"
 
 #define SENSOR_PORT			PINE
 #define SENSOR_PORT_DDR		DDRE

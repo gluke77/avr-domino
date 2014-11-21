@@ -2,7 +2,7 @@
 	#define _KBD_INCLUDED
 	
 #include <avr\io.h>
-#include "../common/common.h"
+#include "common.h"
 
 // Ёто модуль работы с клавиатурой 4х4
 // ¬ходы матрицы подключены к старшей тетраде KBD_PORT
