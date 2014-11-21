@@ -1,0 +1,39 @@
+Continious printing '['
+
+Esc/[/A/B/CCCC/Eot
+Esc/[/?/Eot
+
+A - 1 digit, head select, 1 to 4
+B - 1 char, "Y" - on, "N" - off
+CCCC - 4 digits, inter message pitch, 0000 to 9999
+
+========================================
+
+Message to Head Assignment 'P'
+
+Esc/P/A/BBB/Eot
+Esc/P/A/?/Eot
+
+A - 1 digit, head select, 1 to 4
+BBB - 3 digits, msg buffer select, 001 to MAX_NUM_MSG
+
+========================================
+
+Head Enable 'Q'
+
+Esc/Q/A/B/Eot
+Esc/Q/?/Eot
+
+A - 1 digit, head select, 1 to 4
+B - 1 char, "Y" - on, "N" - off
+
+========================================
+
+Product Counting 'T'
+
+Esc/T/A/0/Eot
+Esc/T/A/?/Eot
+
+A - 1 digit, counter identity, 1
+0 - reset counter
+NNNNNN - 6 digits, product count
