@@ -189,6 +189,13 @@ result_e usart0_cmd(uint8_t * req, uint8_t * ack, size_t ack_size, uint16_t dela
 	{
 		if (CN_ETX == req[0])
 			usart0_putchar(CN_ETX);
+		else if (CN_ACK == req[0])
+			usart0_putchar(CN_ACK);
+		else if (CN_NAK == req[0])
+		{	
+			for (idx = 0; idx < 4; idx++)
+				usart0_putchar(req[idx]);
+		}
 		else
 		{	
 			for (idx = 0; req[idx] != CN_EOT; idx++)
@@ -347,7 +354,7 @@ void usart0_rx_byte_codenet(uint8_t byte)
 	if (CN_ACK == byte)
 	{
 		usart0_inbuf[0] = CN_ACK;
-		usart0_inbuf_pos = 1;
+		usart0_inbuf_pos = 0;
 		usart0_msg_ready = 1;
 	}
 	else if (CN_ESC == byte || CN_NAK == byte)
@@ -573,6 +580,13 @@ result_e usart1_cmd(uint8_t * req, uint8_t * ack, size_t ack_size, uint16_t dela
 	{
 		if (CN_ETX == req[0])
 			usart1_putchar(CN_ETX);
+		else if (CN_ACK == req[0])
+			usart1_putchar(CN_ACK);
+		else if (CN_NAK == req[0])
+		{	
+			for (idx = 0; idx < 4; idx++)
+				usart1_putchar(req[idx]);
+		}
 		else
 		{	
 			for (idx = 0; req[idx] != CN_EOT; idx++)
@@ -716,9 +730,15 @@ void usart1_rx_byte_sec(uint8_t byte)
 
 void usart1_rx_byte_codenet(uint8_t byte)
 {
-	if (CN_ESC == byte)
+	if (CN_ACK == byte)
 	{
-		usart1_inbuf[0] = CN_ESC;
+		usart1_inbuf[0] = CN_ACK;
+		usart1_inbuf_pos = 0;
+		usart1_msg_ready = 1;
+	}
+	else if (CN_ESC == byte || CN_NAK == byte)
+	{
+		usart1_inbuf[0] = byte;
 		usart1_inbuf_pos = 1;
 		usart1_msg_ready = 0;
 	}
@@ -727,6 +747,12 @@ void usart1_rx_byte_codenet(uint8_t byte)
 		
 	if (CN_ESC == usart1_inbuf[0] &&
 		CN_EOT == usart1_inbuf[usart1_inbuf_pos-1])
+	{
+		usart1_msg_ready = 1;
+		usart1_inbuf_pos = 0;
+	}
+	else if (CN_NAK == usart1_inbuf[0] &&
+		4 == usart1_inbuf_pos)
 	{
 		usart1_msg_ready = 1;
 		usart1_inbuf_pos = 0;

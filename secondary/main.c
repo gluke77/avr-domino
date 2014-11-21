@@ -14,10 +14,14 @@
 #include "menu_items.h"
 #include "../common/soft_controls.h"
 #include "../common/meto.h"
+#include "../common/codenet.h"
 
 
 char	ch, x, y;
 char	buf[50];
+char	buf2[50];
+char	buf3[50];
+int		idx;
 
 modbus_cmd_s	cmd;
 uint8_t			msg[MODBUS_MAX_MSG_LENGTH];
@@ -35,10 +39,14 @@ void process_soft_controls(void);
 void process_siren(void);
 void process_foil(void);
 
+void sprintf_codenet(char *, char *);
+void usart0_puts(char *);
+
 int main(void)
 {
 	usart0_init(USART_RS485_MASTER | USART_INT_DISABLE, 115200);
-	usart1_init(USART_RS232 | USART_INT_DISABLE, 115200);
+	usart1_init(USART_RS232 | USART_INT_ENABLE, 9600);
+	usart1_setprotocol_codenet();
 
 	timer_init();
 	kbd_init();
@@ -59,47 +67,21 @@ int main(void)
 	_delay_ms(200);
 
 	lcd_init();
-//	sprintf(lcd_line0, "01234567890123456");
-
-
+	sprintf(lcd_line0, "HELLO");
+	
 	for (;;)
 	{
-		_delay_ms(500);
-		
-		usart0_putchar('0');
-		usart1_putchar('1');
-		
-		process_kbd();
 		do_lcd();
+		process_kbd();
 
-		do_shift();
-		do_sensor();
-		
-		sprintf(lcd_line0, "SENSORS %d      ", sensors);
-		
-		if (!controls)
-			controls = 0xFF;
-		else
-			controls = 0x00;
-	
 /*		
 		menu_doitem();
 
 		process_usart();
 		process_soft_controls();
-		process_siren();
 		
 		soft_sensors = sensors;
 		
-		if (TEST_SOFT_CONTROL(SOFT_CONTROL_BUNKER_MOTOR) &&
-			TEST_SENSOR(SENSOR_END_OF_FOIL))
-			
-			SOFT_CONTROL_OFF(SOFT_CONTROL_BUNKER_MOTOR);
-			
-		if (!TEST_SENSOR(SENSOR_END_OF_FOIL) &&
-			TEST_SENSOR(SENSOR_SEC_REEL))
-			
-			SOFT_CONTROL_ON(SOFT_CONTROL_BUNKER_MOTOR);
 */
 	}
 	return 0;
@@ -153,14 +135,113 @@ void process_cmd(modbus_cmd_s * cmd)
 void process_kbd(void)
 {
 	uint8_t key_id;
+
+	char	buf[50];
+	char	buf2[50];
+	char	buf3[50];
 	
-	for (key_id = 0; key_id < KEY_COUNT; key_id++)
-		if (KEY_PRESSED(key_id))
+	buf[0] = 0;
+	
+	if (KEY_PRESSED(KEY_LEFT))
+	{
+		CLEAR_KEY_PRESSED(KEY_LEFT);
+	
+		idx=0;
+			
+		buf[idx++] = CN_ESC;
+		buf[idx++] = 'F';
+		buf[idx++] = '1';
+		buf[idx++] = '0';
+		buf[idx++] = '0';
+		buf[idx++] = '1';
+		buf[idx++] = '0';		
+		buf[idx++] = CN_EOT;
+		buf[idx++] = 0;
+		
+		sprintf(lcd_line0, "KEY = %d   ", KEY_LEFT);
+	}		
+	else if (KEY_PRESSED(KEY_RIGHT))
+	{
+		CLEAR_KEY_PRESSED(KEY_RIGHT);
+	
+		idx=0;
+		
+		buf[idx++] = CN_ESC;
+		buf[idx++] = 'F';
+		buf[idx++] = '1';
+		buf[idx++] = '1';
+		buf[idx++] = '0';
+		buf[idx++] = '0';
+		buf[idx++] = '0';		
+		buf[idx++] = CN_EOT;
+		buf[idx++] = 0;
+		
+		sprintf(lcd_line0, "KEY = %d   ", KEY_RIGHT);
+	}
+	else if (KEY_PRESSED(KEY_DOWN))
+	{
+		CLEAR_KEY_PRESSED(KEY_DOWN);
+
+		idx=0;
+		
+		buf[idx++] = CN_ESC;
+		buf[idx++] = 'F';
+		buf[idx++] = '1';
+		buf[idx++] = '?';
+		buf[idx++] = CN_EOT;
+		buf[idx++] = 0;
+		
+		sprintf(lcd_line0, "KEY = %d   ", KEY_DOWN);
+	}
+	else if (KEY_PRESSED(KEY_UP))
+	{
+		CLEAR_KEY_PRESSED(KEY_UP);
+			
+		idx=0;
+			
+		buf[idx++] = CN_ESC;
+		buf[idx++] = 'A';
+		buf[idx++] = '?';
+		buf[idx++] = CN_EOT;
+		buf[idx++] = 0;
+		
+		sprintf(lcd_line0, "KEY = %d   ", KEY_UP);
+	}
+	else if (KEY_PRESSED(KEY_MENU))
+	{
+		CLEAR_KEY_PRESSED(KEY_MENU);
+		lcd_line1[0] = 0;
+		
+		sprintf(lcd_line0, "KEY = %d   ", KEY_MENU);
+	}
+	else if (KEY_PRESSED(KEY_ENTER))
+	{
+		CLEAR_KEY_PRESSED(KEY_ENTER);
+		lcd_line1[0] = 0;
+		
+		sprintf(lcd_line0, "KEY = %d   ", KEY_ENTER);
+	}
+
+	if (buf[0])
+	{
+		sprintf_codenet(buf2, buf);
+		strcat(buf2, "\t");
+		
+		if ((res = usart1_cmd(buf, buf, 50, 500)) != RESULT_OK)
 		{
-			CLEAR_KEY_PRESSED(key_id);
-			sprintf(lcd_line1, "PRESSED %d         ", key_id);
-			usart0_putchar('0' + key_id);
+			sprintf(buf3, "%d", res);
+			strcat(buf2, buf3);
 		}
+		else
+		{
+			sprintf_codenet(buf3, buf);
+			strcat(buf2, buf3);
+		}	
+
+		sprintf(lcd_line1, buf2);
+		usart0_puts(buf2);
+		usart0_putchar('\n');
+	}
 }
 
 void process_usart(void)
@@ -194,127 +275,33 @@ void process_soft_controls(void)
 	}
 }
 
-uint8_t		siren_step_count[] = {0, 1, 5};
-uint16_t	siren_program[3][6] = {{500, 500},
-									{100, 1000},
-									{50, 50, 50, 50, 50, 1000}};
 
-void process_siren(void)
+void sprintf_codenet(char * buf2, char * buf)
 {
-	static uint16_t timer_id = 0;
-	static uint8_t step = 0;
-	
-	uint8_t mode;
-	
-	mode = GET_SIREN_MODE;
-	
-	if (0 == mode)
+	int	idx;
+
+	if (buf[0] == CN_ACK)
+		sprintf(buf2, "ACK");
+	else if (buf[0] == CN_NAK)
 	{
-		if (timer_id)
-			stop_timer(timer_id);
-			
-		timer_id = 0;
-		step = 0;
-		CONTROL_OFF(CONTROL_SIREN);
-		CONTROL_OFF(LAMP_RED);
+		buf2[3] = buf[1];
+		buf2[4] = buf[2];
+		buf2[5] = buf[3];
+		buf2[0] = 'N';
+		buf2[1] = 'A';
+		buf2[2] = 'K';
+		buf2[6] = 0;	
 	}
 	else
 	{
-		CONTROL_ON(LAMP_RED);
-		
-		if (0 == timer_id)
-		{
-			timer_id = start_timer(siren_program[mode - 1][step]);
-
-			if (step & 0x01)
-				CONTROL_OFF(CONTROL_SIREN);
-			else
-				CONTROL_ON(CONTROL_SIREN);
-		}
-		else
-			if (!timer_value(timer_id))
-			{
-				stop_timer(timer_id);
-				timer_id = 0;
-				
-				step++;
-				if (step > siren_step_count[mode - 1])
-					step = 0;
-					
-			}
-	}	
+		for (idx = 0;  buf[idx+1] != CN_EOT; idx++)
+			buf2[idx] = buf[idx+1];
+		buf2[idx] = 0;	
+	}
 }
 
-
-#define FOIL_TIMEOUT	(500)
-
-void process_foil(void)
+void usart0_puts(char * str)
 {
-	static uint16_t	timer_id = 0;
-	
-
-	if (TEST_SOFT_CONTROL(SOFT_CONTROL_FOIL_LED))
-	{
-		if (0 == timer_id)
-		{
-			timer_id = start_timer(FOIL_TIMEOUT);
-			
-			if (TEST_CONTROL(CONTROL_FOIL_LED))
-				CONTROL_OFF(CONTROL_FOIL_LED);
-			else
-				CONTROL_ON(CONTROL_FOIL_LED);
-		}
-		else
-		{
-			if (0 == timer_value(timer_id))
-			{
-				stop_timer(timer_id);
-				timer_id = 0;
-			}
-			else if (timer_value(timer_id) < FOIL_TIMEOUT / 2)
-			{
-				if (TEST_CONTROL(CONTROL_FOIL_LED))
-				{
-					if (TEST_SENSOR(SENSOR_END_OF_FOIL))
-						SETBIT(soft_sensors, SENSOR_END_OF_FOIL);
-					else
-						CLEARBIT(soft_sensors, SENSOR_END_OF_FOIL);
-				
-					if (TEST_SENSOR(SENSOR_PRI_REEL))
-						SETBIT(soft_sensors, SENSOR_PRI_REEL);
-					else
-						CLEARBIT(soft_sensors, SENSOR_PRI_REEL);
-
-					if (TEST_SENSOR(SENSOR_SEC_REEL))
-						SETBIT(soft_sensors, SENSOR_SEC_REEL);
-					else
-						CLEARBIT(soft_sensors, SENSOR_SEC_REEL);
-				}
-				else
-				{
-					if (TEST_SENSOR(SENSOR_END_OF_FOIL))
-						SETBIT(soft_sensors, ERROR_SENSOR_END_OF_FOIL);
-				
-					if (TEST_SENSOR(SENSOR_PRI_REEL))
-						SETBIT(soft_sensors, ERROR_SENSOR_PRI_REEL);
-
-					if (TEST_SENSOR(SENSOR_SEC_REEL))
-						SETBIT(soft_sensors, ERROR_SENSOR_SEC_REEL);
-				}
-			}
-		}
-	}
-	else
-	{
-		CONTROL_OFF(CONTROL_FOIL_LED);
-		soft_sensors = sensors;
-		
-		if (0 != timer_id)
-			stop_timer(timer_id);
-		timer_id = 0;
-		
-		CLEARBIT(soft_sensors, ERROR_SENSOR_END_OF_FOIL);
-		CLEARBIT(soft_sensors, ERROR_SENSOR_PRI_REEL);
-		CLEARBIT(soft_sensors, ERROR_SENSOR_SEC_REEL);
-	}
+	while (*str)
+		usart0_putchar(*str++);
 }
