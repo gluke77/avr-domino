@@ -5,30 +5,10 @@
 
 typedef void (* menu_item_t)(void);
 
-#if defined _MASTER
 enum menu_mode_e
 {
 	MENU_MODE_START = 0,
-//	MENU_MODE_SENSORS = 0,
-	MENU_MODE_SCAN_SENSORS,
-	MENU_MODE_CONTROLS,
-	MENU_MODE_LINK,
-	MENU_MODE_COUNT
-};
-
-enum menu_item_e
-{
-	MENU_ITEM_COUNT = 15
-};
-#endif /* _MASTER */
-
-#if defined _SECONDARY
-enum menu_mode_e
-{
-	MENU_MODE_START = 0,
-//	MENU_MODE_SENSORS = 0,
-	MENU_MODE_SCAN_SENSORS,
-	MENU_MODE_CONTROLS,
+//	MENU_MODE_CONTROLS,
 	MENU_MODE_VERSION,
 	MENU_MODE_COUNT
 };
@@ -37,8 +17,6 @@ enum menu_item_e
 {
 	MENU_ITEM_COUNT = 15
 };
-#endif /* _SECONDARY */
-
 
 void menu_init(void);
 void menu_doitem(void);

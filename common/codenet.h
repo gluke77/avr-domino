@@ -13,5 +13,9 @@
 
 #define CN_MAX_MSG_LENGTH		(100)
 
+int codenet_continious_printing(int /* head */, int /* on */, int /* pitch */);
+int	codenet_message_to_head_assignment(int /* head */, int /* msg */);
+int codenet_head_enable(int /* head */, int /* on */);
+int codenet_product_counting(int /* req */);
 
 #endif /* _CODENET_INCLUDED */

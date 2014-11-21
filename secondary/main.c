@@ -12,7 +12,6 @@
 #include "../common/modbus.h"
 #include "../common/menu.h"
 #include "menu_items.h"
-#include "../common/soft_controls.h"
 #include "../common/meto.h"
 #include "../common/codenet.h"
 
@@ -29,15 +28,9 @@ result_e		res;
 
 uint8_t	timer_id = 0;
 
-uint8_t soft_controls = 0;
-uint8_t soft_sensors = 0;
-
 void process_usart(void);
 void process_cmd(modbus_cmd_s * /* cmd */);
 void process_kbd(void);
-void process_soft_controls(void);
-void process_siren(void);
-void process_foil(void);
 
 void sprintf_codenet(char *, char *);
 void usart0_puts(char *);
@@ -52,8 +45,8 @@ int main(void)
 	kbd_init();
 	shift_init();
 	sensor_init();
-//	menu_init();
-//	menu_items_init();
+	menu_init();
+	menu_items_init();
 
 	beep_init();
 	
@@ -67,22 +60,12 @@ int main(void)
 	_delay_ms(200);
 
 	lcd_init();
-	sprintf(lcd_line0, "HELLO");
 	
 	for (;;)
 	{
 		do_lcd();
-		process_kbd();
-
-/*		
 		menu_doitem();
-
 		process_usart();
-		process_soft_controls();
-		
-		soft_sensors = sensors;
-		
-*/
 	}
 	return 0;
 }
@@ -93,10 +76,6 @@ void do_timer(void)
 	do_kbd();
 }
 
-#define CMD_NOP			(0)
-#define CMD_SETDATA		(1)
-#define CMD_SETBITS		(2)
-#define CMD_CLEARBITS	(3)
 
 void process_cmd(modbus_cmd_s * cmd)
 {
@@ -106,16 +85,6 @@ void process_cmd(modbus_cmd_s * cmd)
 	
 	switch (cmd->addr)
 	{
-	case CMD_NOP:
-		break;
-	case CMD_SETDATA:
-		soft_controls = data;
-		break;
-	case CMD_SETBITS:
-		soft_controls |= data;
-		break;
-	case CMD_CLEARBITS:
-		soft_controls &= ~data;
 		break;
 	}
 	
@@ -123,125 +92,13 @@ void process_cmd(modbus_cmd_s * cmd)
 	cmd->cmd_code = MODBUS_READ;
 	cmd->cmd_type = MODBUS_ACK;
 	cmd->addr = 1;
-	cmd->value[0] = ((uint16_t)soft_sensors & 0x00FF) | ((((uint16_t)soft_controls) << 8) & 0xFF00);
+//	cmd->value[0] = ((uint16_t)soft_sensors & 0x00FF) | ((((uint16_t)soft_controls) << 8) & 0xFF00);
 
 	modbus_cmd2msg(cmd, msg, MODBUS_MAX_MSG_LENGTH);
 	
 	_delay_ms(10);
 	
 	usart0_cmd(msg, 0, 0, 0);
-}
-
-void process_kbd(void)
-{
-	uint8_t key_id;
-
-	char	buf[50];
-	char	buf2[50];
-	char	buf3[50];
-	
-	buf[0] = 0;
-	
-	if (KEY_PRESSED(KEY_LEFT))
-	{
-		CLEAR_KEY_PRESSED(KEY_LEFT);
-	
-		idx=0;
-			
-		buf[idx++] = CN_ESC;
-		buf[idx++] = 'F';
-		buf[idx++] = '1';
-		buf[idx++] = '0';
-		buf[idx++] = '0';
-		buf[idx++] = '1';
-		buf[idx++] = '0';		
-		buf[idx++] = CN_EOT;
-		buf[idx++] = 0;
-		
-		sprintf(lcd_line0, "KEY = %d   ", KEY_LEFT);
-	}		
-	else if (KEY_PRESSED(KEY_RIGHT))
-	{
-		CLEAR_KEY_PRESSED(KEY_RIGHT);
-	
-		idx=0;
-		
-		buf[idx++] = CN_ESC;
-		buf[idx++] = 'F';
-		buf[idx++] = '1';
-		buf[idx++] = '1';
-		buf[idx++] = '0';
-		buf[idx++] = '0';
-		buf[idx++] = '0';		
-		buf[idx++] = CN_EOT;
-		buf[idx++] = 0;
-		
-		sprintf(lcd_line0, "KEY = %d   ", KEY_RIGHT);
-	}
-	else if (KEY_PRESSED(KEY_DOWN))
-	{
-		CLEAR_KEY_PRESSED(KEY_DOWN);
-
-		idx=0;
-		
-		buf[idx++] = CN_ESC;
-		buf[idx++] = 'F';
-		buf[idx++] = '1';
-		buf[idx++] = '?';
-		buf[idx++] = CN_EOT;
-		buf[idx++] = 0;
-		
-		sprintf(lcd_line0, "KEY = %d   ", KEY_DOWN);
-	}
-	else if (KEY_PRESSED(KEY_UP))
-	{
-		CLEAR_KEY_PRESSED(KEY_UP);
-			
-		idx=0;
-			
-		buf[idx++] = CN_ESC;
-		buf[idx++] = 'A';
-		buf[idx++] = '?';
-		buf[idx++] = CN_EOT;
-		buf[idx++] = 0;
-		
-		sprintf(lcd_line0, "KEY = %d   ", KEY_UP);
-	}
-	else if (KEY_PRESSED(KEY_MENU))
-	{
-		CLEAR_KEY_PRESSED(KEY_MENU);
-		lcd_line1[0] = 0;
-		
-		sprintf(lcd_line0, "KEY = %d   ", KEY_MENU);
-	}
-	else if (KEY_PRESSED(KEY_ENTER))
-	{
-		CLEAR_KEY_PRESSED(KEY_ENTER);
-		lcd_line1[0] = 0;
-		
-		sprintf(lcd_line0, "KEY = %d   ", KEY_ENTER);
-	}
-
-	if (buf[0])
-	{
-		sprintf_codenet(buf2, buf);
-		strcat(buf2, "\t");
-		
-		if ((res = usart1_cmd(buf, buf, 50, 500)) != RESULT_OK)
-		{
-			sprintf(buf3, "%d", res);
-			strcat(buf2, buf3);
-		}
-		else
-		{
-			sprintf_codenet(buf3, buf);
-			strcat(buf2, buf3);
-		}	
-
-		sprintf(lcd_line1, buf2);
-		usart0_puts(buf2);
-		usart0_putchar('\n');
-	}
 }
 
 void process_usart(void)
@@ -261,20 +118,6 @@ void process_usart(void)
 			}
 		}
 }
-
-void process_soft_controls(void)
-{
-	static uint8_t old_soft_controls = 0;
-	
-	if (old_soft_controls != soft_controls)
-	{
-		old_soft_controls = soft_controls;
-		
-		controls &= 0xC0;	// 0xE0 if you want pulse foil led
-		controls |= soft_controls;
-	}
-}
-
 
 void sprintf_codenet(char * buf2, char * buf)
 {

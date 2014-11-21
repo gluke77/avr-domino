@@ -10,7 +10,6 @@
 #include "kbd.h"
 #include "../common/lcd.h"
 #include "sensor.h"
-#include "../common/soft_controls.h"
 #include "../common/beep.h"
 
 void menu_items_init(void)
@@ -19,12 +18,8 @@ void menu_items_init(void)
 	
 	menu_items[MENU_MODE_START][0] = menu_start;
 	
-//	menu_items[MENU_MODE_SENSORS][0] = menu_sensors;
-	
-	menu_items[MENU_MODE_SCAN_SENSORS][0] = menu_scan_sensors;
-
 	idx = 0; 
-
+/*
 	menu_items[MENU_MODE_CONTROLS][idx++] = menu_controls;
 
 	menu_items[MENU_MODE_CONTROLS][idx++] = menu_stop_lamp;
@@ -34,7 +29,7 @@ void menu_items_init(void)
 	menu_items[MENU_MODE_CONTROLS][idx++] = menu_bunker_motor;
 	menu_items[MENU_MODE_CONTROLS][idx++] = menu_foil_led;
 	menu_items[MENU_MODE_CONTROLS][idx++] = menu_siren_mode;
-
+*/
 	menu_items[MENU_MODE_VERSION][0] = menu_version;
 }
 
@@ -69,7 +64,7 @@ void menu_start(void)
 	
 	menu_common();
 }
-
+/*
 void menu_sensors(void)
 {
 	uint8_t	idx;
@@ -326,6 +321,7 @@ void menu_siren_mode(void)
 	
 	menu_common();
 }
+*/
 
 void menu_version(void)
 {

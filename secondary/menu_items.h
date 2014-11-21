@@ -6,7 +6,7 @@ void menu_items_init(void);
 void menu_common(void);
 
 void menu_start(void);
-
+/*
 void menu_sensors(void);
 
 void menu_scan_sensors(void);
@@ -22,6 +22,8 @@ void menu_tractor_lock(void);
 void menu_siren_mode(void);
 
 void menu_test(void);
+
+*/
 void menu_version(void);
 
 
